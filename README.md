@@ -167,7 +167,7 @@ Please follow [Conventional Commits](https://www.conventionalcommits.org) and en
 
 ### License
 Released under the [MIT License](./LICENSE).  
-© 2025 Siddharth Pal — derived from original work © 2024 abhigyanpatwari.
+© 2025 Siddharth Pal 
 
 ### Disclaimer
 This project provides **information only**.  
@@ -179,6 +179,6 @@ Always consult qualified professionals for healthcare decisions.
 ## 🌟 Acknowledgments
 
 Gratitude to the open-source communities of **LangChain**, **LangGraph**, and **Ollama**.  
-Special thanks to mentors and collaborators at **IIT BHU**, **Siemens**, and **Manipal University Jaipur** for research guidance and support.
+
 
 > *ClinSynapse bridges computation and clinical reasoning — empowering medical research through intelligent agent collaboration.*
