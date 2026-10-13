@@ -1,0 +1,35 @@
+name: nightly-eval
+
+# The full eval needs the PubMed index (~1 GB) and model weights, so it runs on a self-hosted
+# runner that already has data/index built (e.g. the dev machine). Switch `runs-on` if you host
+# the index elsewhere.
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "PubMedQA items"
+        default: "300"
+
+jobs:
+  full-eval:
+    runs-on: self-hosted
+    timeout-minutes: 240
+    env:
+      OPEN_AI_API_KEY: ${{ secrets.OPEN_AI_API_KEY }}
+      LIMIT: ${{ github.event.inputs.limit || '300' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --frozen
+      - name: Full eval and ablations
+        run: make evals LIMIT=$LIMIT
+      - run: uv run python -m evals.report
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: |
+            reports/report.html
+            reports/results.md
+            reports/runs/*/summary.json
