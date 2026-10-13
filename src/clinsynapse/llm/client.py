@@ -6,7 +6,13 @@ import time
 from dataclasses import dataclass, field
 from typing import TypeVar
 
-from openai import BadRequestError, OpenAI
+from openai import (
+    AuthenticationError,
+    BadRequestError,
+    NotFoundError,
+    OpenAI,
+    PermissionDeniedError,
+)
 from pydantic import BaseModel, ValidationError
 
 from clinsynapse.config import Settings, get_settings
@@ -36,6 +42,13 @@ def _strip_fences(raw: str) -> str:
 
 class LLMError(RuntimeError):
     pass
+
+
+class LLMFatal(RuntimeError):
+    """Retrying can't help (bad key, no access e.g. off the VT VPN, unknown model).
+
+    Deliberately not an LLMError: nodes degrade on LLMError, but this must stop the run.
+    """
 
 
 @dataclass
@@ -174,6 +187,8 @@ class LLMClient:
             try:
                 with self._slots:
                     return self.client.chat.completions.create(**params)
+            except (AuthenticationError, PermissionDeniedError, NotFoundError) as exc:
+                raise LLMFatal(f"{type(exc).__name__}: {exc}") from exc
             except BadRequestError as exc:
                 # Endpoints without JSON mode reject response_format: fall back to prompt-only JSON.
                 if "response_format" in params:

@@ -56,3 +56,26 @@ def test_json_fallback_and_fence_stripping(tmp_path, monkeypatch):
     assert client.structured([{"role": "user", "content": "hi"}], Out).ok is True
     assert "response_format" in sent[0] and "response_format" not in sent[1]
     assert client._json_mode is False
+
+
+def test_permission_denied_is_fatal_not_retried(tmp_path):
+    import httpx
+    import pytest
+    from openai import PermissionDeniedError
+
+    from clinsynapse.config import Settings
+    from clinsynapse.llm.client import LLMClient, LLMFatal
+
+    calls = []
+
+    class Denied:
+        def create(self, **params):
+            calls.append(1)
+            req = httpx.Request("POST", "http://x")
+            raise PermissionDeniedError("VPN", response=httpx.Response(403, request=req), body=None)
+
+    client = LLMClient(Settings(llm_api_key="k", cache_file=tmp_path / "c.sqlite"))
+    client._client = type("O", (), {"chat": type("Ch", (), {"completions": Denied()})})
+    with pytest.raises(LLMFatal):
+        client.chat([{"role": "user", "content": "hi"}])
+    assert calls == [1]

@@ -158,9 +158,21 @@ def summarize(records: list[dict]) -> dict:
     return summary
 
 
+def preflight(llm: LLMClient, settings: Settings) -> None:
+    """One uncached call before a long run, so a dead endpoint fails in seconds, not hours."""
+    if settings.replay_only:
+        return
+    try:
+        llm.client.chat.completions.create(
+            model=settings.main_model, max_tokens=16, messages=[{"role": "user", "content": "ok"}])
+    except Exception as exc:
+        raise SystemExit(f"LLM endpoint unusable, not starting the run: {exc}") from exc
+
+
 def run_agent(items: list[Item], settings: Settings, fault: Fault, judge_name: str,
               workers: int, extra_evidence: dict[str, str]) -> list[dict]:
     llm = LLMClient(settings)
+    preflight(llm, settings)
     retriever = CachedRetriever(settings)
     judge = CachedJudge(judge_name, ResponseCache(settings.cache_path))
 
