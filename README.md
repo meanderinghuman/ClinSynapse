@@ -63,7 +63,7 @@ graph TD
 | **Operations** | p50/p95 latency, tokens per query, $ per 1k queries |
 | **Stats** | Bootstrap 95% CIs on every metric; paired permutation tests for every A/B (`evals/stats.py`) |
 | **Fault injection** | Corrupted numbers, swapped citations, gold document removed, planted prompt injection (`evals/faults/`) |
-| **Judge calibration** | NLI vs two LLM judges (gpt-oss-120b, DeepSeek-V4.1-Flash) against ~150 hand-labeled claims: accuracy, Cohen's κ, hallucination precision/recall, cost (`evals/judges/calibration.py`) |
+| **Judge validity** | Inter-judge agreement (NLI vs gpt-oss-120b vs DeepSeek-V4.1-Flash, Cohen's κ) and fault sensitivity (does faithfulness drop when numbers are corrupted?). Not validated against human labels; see Limitations |
 | **CI gate** | Every PR replays a 30-case smoke eval from a committed cache (no keys or models needed) and fails only if faithfulness, citation validity, accuracy or refusal accuracy drop past a threshold **and** p < 0.05 |
 
 ### Ablations
@@ -77,15 +77,17 @@ graph TD
 | `no_verifier` | How much hallucination does the verifier remove, and what does it cost? |
 | `alt_model` | gpt-oss-120b vs DeepSeek-V4.1-Flash: quality, latency, tokens |
 
-## Judge calibration
+## Judge agreement
 
-> Pending: label claims with `python -m evals.judges.calibration export reports/runs/<run>`, then `make calibration`.
+> Pending the full run: `uv run python -m evals.judges.agreement reports/runs/pubmedqa-full-n300`.
 
-| Judge | Accuracy | κ | Halluc. precision | Halluc. recall | $/1k claims |
-|---|---|---|---|---|---|
-| NLI (DeBERTa-v3) | – | – | – | – | 0 |
-| LLM: gpt-oss-120b | – | – | – | – | – |
-| LLM: DeepSeek-V4.1-Flash | – | – | – | – | – |
+| Judge pair | Agreement | κ |
+|---|---|---|
+| DeepSeek-V4.1-Flash vs gpt-oss-120b | – | – |
+| DeepSeek-V4.1-Flash vs NLI | – | – |
+| gpt-oss-120b vs NLI | – | – |
+
+Agreement is not accuracy: judges can agree and all be wrong. A human-labeled calibration set is supported (`ui/label.py`, `evals/judges/calibration.py`) but not done.
 
 ## What I learned / what failed
 
@@ -96,6 +98,7 @@ graph TD
 - The index is ~273k PubMedQA abstracts, not all of PubMed, so many real questions will (correctly) abstain. The 2.4M subset and Elasticsearch are the next step.
 - Abstracts only: no full text, tables or figures.
 - PubMedQA questions are derived from article titles. Titles are excluded from the index, but retrieval on PubMedQA is still easier than open-world search.
+- Faithfulness is scored by an LLM judge (DeepSeek-V4.1-Flash) that has not been validated against human labels. Inter-judge agreement and fault sensitivity are the only evidence it works. In one inspected case the NLI judge rejected a near-verbatim claim, so judge choice matters.
 - The NLI judge sees at most 512 tokens of evidence per claim.
 - ARC is free for VT users, so `$/1k queries` is a reference cost at public list prices (`src/clinsynapse/llm/client.py`). Models without a listed price report $0.
 
