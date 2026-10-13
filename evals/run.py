@@ -140,6 +140,11 @@ def summarize(records: list[dict]) -> dict:
             len(labeled), lambda idx: am.macro_f1([preds[i] for i in idx], [golds[i] for i in idx])
         )
         summary["metrics"]["macro_f1"] = f1.model_dump()
+        # Always answering the most common label: the floor any accuracy must clear.
+        majority = max(set(golds), key=golds.count)
+        summary["baselines"] = {"majority_label": majority,
+                                "majority_accuracy": golds.count(majority) / len(golds),
+                                "majority_macro_f1": am.macro_f1([majority] * len(golds), golds)}
 
     lat = [r["metrics"]["latency_s"] for r in records]
     cost = [r["metrics"]["cost_usd"] for r in records]

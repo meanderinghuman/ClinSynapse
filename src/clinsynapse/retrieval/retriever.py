@@ -73,6 +73,9 @@ class Retriever:
         ]
 
 
+META_VERSION = "meta:index_version"
+
+
 def _rel(path: Path) -> str:
     p = path.resolve()
     return p.relative_to(ROOT).as_posix() if p.is_relative_to(ROOT) else str(p)
@@ -86,6 +89,18 @@ class CachedRetriever:
         self.cache = ResponseCache(self.settings.cache_path)
         self._inner: Retriever | None = None
         self._lock = threading.Lock()
+        self.version = self._index_version()
+
+    def _index_version(self) -> str:
+        """From the index's VERSION file; CI has no index, so fall back to the one the cache recorded."""
+        f = self.settings.index_dir / "VERSION"
+        if f.exists():
+            version = f.read_text().strip()
+            if not self.settings.replay_only:
+                self.cache.put(META_VERSION, {"version": version})
+            return version
+        hit = self.cache.get(META_VERSION)
+        return hit["version"] if hit else "unversioned"
 
     @property
     def inner(self) -> Retriever:
@@ -99,7 +114,7 @@ class CachedRetriever:
         key = prompt_key({
             "kind": "retrieval", "query": query, "k": k or s.top_k, "mode": s.retrieval_mode,
             "rerank": s.rerank, "cands": s.candidates_per_retriever, "rrf_k": s.rrf_k,
-            "index": _rel(s.index_dir),
+            "index": _rel(s.index_dir), "version": self.version,
         })
         if hit := self.cache.get(key):
             return [Passage.model_validate(p) for p in hit["passages"]]

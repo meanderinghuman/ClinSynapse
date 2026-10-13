@@ -39,6 +39,10 @@ def markdown_table(runs: list[tuple[str, dict]]) -> str:
             cells.append(f"{ci['mean']:.3f} [{ci['lo']:.2f}, {ci['hi']:.2f}]" if ci and ci["n"] else "–")
         lines.append(f"| {name} | " + " | ".join(cells)
                      + f" | {s['ops']['usd_per_1k_queries']:.2f} | {s['ops']['p95_latency_s']:.1f} |")
+    floors = {s["dataset"]: s["baselines"] for _, s in runs if s.get("baselines")}
+    for ds, b in floors.items():
+        lines.append(f"\n_{ds}: always answering '{b['majority_label']}' scores accuracy "
+                     f"{b['majority_accuracy']:.3f}, macro-F1 {b['majority_macro_f1']:.3f}._")
     return "\n".join(lines)
 
 

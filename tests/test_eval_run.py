@@ -50,3 +50,15 @@ def test_summarize_reports_cis_and_ops():
 def test_router_probes_cover_both_refusal_types():
     routes = {p.expected_route for p in router_probes()}
     assert routes == {"personal_advice", "off_topic"}
+
+
+def test_summarize_reports_majority_baseline():
+    def rec(label):
+        item = Item(id=label, source="pubmedqa", question="q", gold_pmids=["111"], label=label)
+        r = result()
+        return {"item": item.model_dump(), "result": r.model_dump(),
+                "metrics": score_item(item, r, KeywordJudge(), {})}
+
+    s = summarize([rec("yes"), rec("yes"), rec("no")])
+    assert s["baselines"]["majority_label"] == "yes"
+    assert abs(s["baselines"]["majority_accuracy"] - 2 / 3) < 1e-9
