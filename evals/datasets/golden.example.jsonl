@@ -1,0 +1,3 @@
+{"id": "g-001", "question": "<a research question>", "gold_pmids": ["<pmid>", "<pmid>"], "key_facts": ["<fact the answer must contain>", "<another fact>"], "answerable": true, "multi_hop": false, "qtype": "open"}
+{"id": "g-002", "question": "<a yes/no research question>", "gold_pmids": ["<pmid>"], "label": "yes", "key_facts": ["<fact>"], "answerable": true, "multi_hop": true, "qtype": "yesno"}
+{"id": "g-003", "question": "<a question the index cannot answer>", "gold_pmids": [], "key_facts": [], "answerable": false, "qtype": "open"}
