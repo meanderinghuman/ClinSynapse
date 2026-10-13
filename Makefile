@@ -1,7 +1,7 @@
 LIMIT ?= 300
 RUN = uv run python -m evals.run --dataset pubmedqa --limit $(LIMIT)
 
-.PHONY: agreement llm-check setup index test smoke baseline evals ablations faults calibration report reproduce serve ui
+.PHONY: retrieval agreement llm-check setup index test smoke baseline evals ablations faults calibration report reproduce serve ui
 
 setup:
 	uv sync --group ui --group obs
@@ -22,8 +22,10 @@ smoke:               ## record/replay the CI smoke cache (needs an API key on fi
 baseline: smoke      ## promote the current smoke run to the committed CI baseline
 	rm -rf reports/baseline/smoke && mkdir -p reports/baseline && cp -r reports/ci/smoke reports/baseline/smoke
 
-ablations:
+retrieval:           ## retrieval-only grid on all 1,000 PubMedQA questions (no LLM)
 	uv run python -m evals.run --dataset pubmedqa --retrieval-only
+
+ablations:
 	for p in full single_shot no_rerank no_grader no_verifier bm25 dense alt_model; do \
 		$(RUN) --preset $$p; done
 	uv run python -m evals.run --dataset router --preset full
@@ -35,7 +37,7 @@ faults:
 calibration:          ## optional: needs hand labels (ui/label.py)
 	uv run python -m evals.judges.calibration score --judges nli llm-main llm-alt
 
-evals: ablations faults
+evals: retrieval ablations faults
 
 report:
 	uv run python -m evals.report
