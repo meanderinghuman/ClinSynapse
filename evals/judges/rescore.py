@@ -8,6 +8,7 @@ preset, so comparing models with one judge would let a model grade its own answe
 
 import argparse
 import json
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -18,9 +19,8 @@ from evals.run import CachedJudge
 from evals.stats import compare
 
 
-def per_item_faithfulness(run_dir: Path, judge: CachedJudge) -> dict[str, float | None]:
-    out = {}
-    for line in (run_dir / "results.jsonl").open():
+def per_item_faithfulness(run_dir: Path, judge: CachedJudge, workers: int = 8) -> dict[str, float | None]:
+    def score(line: str) -> tuple[str, float | None]:
         r = json.loads(line)
         res = r["result"]
         evidence = {p["pmid"]: p["text"] for p in r.get("evidence", [])}
@@ -31,8 +31,10 @@ def per_item_faithfulness(run_dir: Path, judge: CachedJudge) -> dict[str, float 
             v = judge.supported(c["text"], ev) if ev else False
             if v is not None:
                 verdicts.append(v)
-        out[r["item"]["id"]] = float(np.mean(verdicts)) if verdicts else None
-    return out
+        return r["item"]["id"], float(np.mean(verdicts)) if verdicts else None
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return dict(pool.map(score, (run_dir / "results.jsonl").read_text().splitlines()))
 
 
 def main() -> None:
