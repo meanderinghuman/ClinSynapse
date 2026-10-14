@@ -1,0 +1,31 @@
+{
+  "n_claims": 650,
+  "supported_rate": {
+    "nli": 0.783,
+    "llm-main": 0.914,
+    "llm-alt": 0.706
+  },
+  "pairs": [
+    {
+      "a": "nli",
+      "b": "llm-main",
+      "n": 650,
+      "agreement": 0.762,
+      "kappa": 0.103
+    },
+    {
+      "a": "nli",
+      "b": "llm-alt",
+      "n": 650,
+      "agreement": 0.695,
+      "kappa": 0.205
+    },
+    {
+      "a": "llm-main",
+      "b": "llm-alt",
+      "n": 650,
+      "agreement": 0.789,
+      "kappa": 0.36
+    }
+  ]
+}
