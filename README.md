@@ -8,7 +8,9 @@
 
 > Research use only. Not medical advice.
 
-<!-- GIF of the UI goes here -->
+![ClinSynapse answering a question with verified PubMed citations](docs/demo.gif)
+
+<sub>Live run (sped up): node-by-node progress, a yes/no verdict, every claim linked to its PubMed article, and the supporting sentence highlighted in the cited abstract.</sub>
 
 ## Results
 
