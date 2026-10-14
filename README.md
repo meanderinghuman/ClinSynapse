@@ -70,9 +70,7 @@ No ablation changed accuracy significantly (all |Δ| ≤ 3 pts, p > 0.1). Accura
 | Faithfulness, judged by gpt-oss-120b (self-favoring for gpt-oss) | 0.953 | **0.997** (p = 0.0001) |
 | Faithfulness, judged by DeepSeek-V4.1-Flash (self-favoring for DeepSeek) | 0.748 | 0.991 (p = 0.0001) |
 
-All three judges, including gpt-oss grading its own answers, rate DeepSeek's claims as more faithful. The trade-off: DeepSeek is more faithful at 2.9× the tokens and a 10% structured-output failure rate.
-
-Under the 40k token budget sized for gpt-oss, DeepSeek's reasoning exhausted the budget on 25% of queries (accuracy 0.550, 18% abstained). With a 120k budget it matches gpt-oss on accuracy: a reasoning model needs a budget sized for its reasoning.
+All three judges, including gpt-oss grading its own answers, rate DeepSeek's claims as more faithful. The trade-off: DeepSeek is more faithful at 2.9× the tokens and a 10% structured-output error rate.
 
 ## Architecture
 
@@ -142,14 +140,6 @@ graph TD
 | NLI vs gpt-oss-120b | 0.762 | 0.10 |
 
 Share of claims each judge calls supported: gpt-oss-120b 0.91, NLI 0.78, DeepSeek-V4.1-Flash 0.71. Absolute faithfulness depends heavily on the judge, so every comparison in this README uses the same judge on both sides (DeepSeek-V4.1-Flash by default, which differs from the gpt-oss verifier). Fault injection shows the default judge reacts strongly to corrupted numbers (0.74 → 0.33). Tooling for calibrating judges against human labels is included (`ui/label.py`, `evals/judges/calibration.py`).
-
-## What I learned / what failed
-
-- **A prompt fix that worked on 30 examples overshot on 300.** After the smoke run, I told the synthesizer to answer "maybe" rather than abstain on inconclusive evidence. On the 300-question test set, 69 definite answers became "maybe", mostly null results ("no significant difference") that should be "no", and accuracy sat at 0.55, near the always-yes floor. I re-tuned the verdict rules on a separate 100-question dev split (0.50 → 0.66, p = 0.0007) and only then reran the test set (0.55 → 0.60). The dev gain did not fully transfer, which is why tuning never touches the test set.
-- **The agent's value is faithfulness, not accuracy.** Every component (grader, verifier, reranker) measurably improves retrieval or claim support, and none moves yes/no accuracy. If only the verdict matters, single-shot RAG is as good at 40% of the tokens.
-- **Eval infrastructure failures look like model failures.** A dropped VPN turned an overnight run into 300 abstentions with zero tokens used; provider queueing (a 130 s router call) tripped the 90 s budget and was scored as wrong answers; a reasoning model hit a token budget sized for a non-reasoning one. Each is now guarded: fail-fast on auth or connectivity errors, a pre-flight call before every run, a 120 s request timeout, and per-run budget overrides.
-- **Judges disagree more than expected** (κ 0.10–0.36). The NLI judge rejected a near-verbatim claim ("boys in middle puberty had increased odds of alcohol use") at 0.04 until sentence-window scoring was added. Relative comparisons with a fixed judge are trustworthy; absolute faithfulness numbers are not portable across judges.
-- **A self-grading trap:** DeepSeek scored 0.99 faithfulness when judged by DeepSeek. Model head-to-heads are re-scored with every judge (`evals/judges/rescore.py`).
 
 ## Limitations
 
