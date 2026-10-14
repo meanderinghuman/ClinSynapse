@@ -62,3 +62,11 @@ def test_summarize_reports_majority_baseline():
     s = summarize([rec("yes"), rec("yes"), rec("no")])
     assert s["baselines"]["majority_label"] == "yes"
     assert abs(s["baselines"]["majority_accuracy"] - 2 / 3) < 1e-9
+
+
+def test_dev_split_is_disjoint_from_test_set():
+    from evals.datasets.items import TEST_SIZE, pubmedqa, pubmedqa_dev
+
+    test = {it.id for it in pubmedqa(TEST_SIZE)}
+    dev = {it.id for it in pubmedqa_dev()}
+    assert len(dev) == 100 and not dev & test

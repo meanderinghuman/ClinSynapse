@@ -1,0 +1,99 @@
+{
+  "n": 30,
+  "metrics": {
+    "route_correct": {
+      "mean": 1.0,
+      "lo": 1.0,
+      "hi": 1.0,
+      "n": 30
+    },
+    "steps": {
+      "mean": 1.0,
+      "lo": 1.0,
+      "hi": 1.0,
+      "n": 30
+    },
+    "retrieval_loops": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "n": 30
+    },
+    "retry_loop": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "n": 30
+    },
+    "tool_error": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "n": 30
+    },
+    "budget_hit": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "n": 30
+    },
+    "latency_s": {
+      "mean": 1.1208666666666667,
+      "lo": 1.0452566666666665,
+      "hi": 1.196040833333333,
+      "n": 30
+    },
+    "tokens": {
+      "mean": 411.93333333333334,
+      "lo": 408.4658333333333,
+      "hi": 415.6666666666667,
+      "n": 30
+    },
+    "cost_usd": {
+      "mean": 9.977000000000002e-05,
+      "lo": 9.781000000000001e-05,
+      "hi": 0.00010192,
+      "n": 30
+    }
+  },
+  "ops": {
+    "p50_latency_s": 1.1305,
+    "p95_latency_s": 1.4579,
+    "tokens_per_query": 411.93333333333334,
+    "usd_per_1k_queries": 0.09977000000000001,
+    "cache_hit_rate": 0.0
+  },
+  "dataset": "router",
+  "preset": "full",
+  "fault": "none",
+  "judge": "llm-alt",
+  "settings": {
+    "llm_base_url": "https://llm-api.arc.vt.edu/api/v1",
+    "main_model": "gpt-oss-120b",
+    "small_model": "gpt-oss-120b",
+    "alt_model": "DeepSeek-V4.1-Flash",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "json_mode": true,
+    "max_concurrency": 8,
+    "llm_cache": true,
+    "retrieval_mode": "hybrid",
+    "rerank": true,
+    "candidates_per_retriever": 50,
+    "top_k": 8,
+    "rrf_k": 60,
+    "device": "mps",
+    "qdrant_url": null,
+    "use_planner": true,
+    "use_grader": true,
+    "use_verifier": true,
+    "max_retrieval_loops": 2,
+    "min_relevant_passages": 1,
+    "max_unsupported_ratio": 0.5,
+    "max_steps": 20,
+    "max_tokens": 40000,
+    "max_seconds": 90.0,
+    "web_search": false,
+    "replay_only": false
+  }
+}

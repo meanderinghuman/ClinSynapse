@@ -56,3 +56,5 @@ __pycache__/
 reports/ci/
 reports/runs/*/results.jsonl
 reports/report.html
+reports/dev/*/results.jsonl
+reports/v1-prompt/*/results.jsonl

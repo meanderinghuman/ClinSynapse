@@ -217,7 +217,7 @@ def run_retrieval(items: list[Item], base: Settings) -> dict:
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--dataset", default="pubmedqa", choices=["pubmedqa", "golden", "router", "bioasq"])
+    p.add_argument("--dataset", default="pubmedqa", choices=["pubmedqa", "pubmedqa-dev", "golden", "router", "bioasq"])
     p.add_argument("--limit", type=int)
     p.add_argument("--preset", default="full", choices=list(PRESETS))
     p.add_argument("--fault", default="none",

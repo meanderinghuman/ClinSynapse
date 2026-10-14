@@ -24,16 +24,29 @@ class Item(BaseModel):
     qtype: str = "yesno"
 
 
-def pubmedqa(limit: int | None = None, seed: int = 0) -> list[Item]:
+TEST_SIZE = 300  # the reported test set: random.Random(0).sample(all 1,000, 300)
+
+
+def _pubmedqa_all() -> list[Item]:
     from datasets import load_dataset
 
     rows = load_dataset("qiaojin/PubMedQA", "pqa_labeled", split="train")
-    items = [
+    return [
         Item(id=f"pqa-{r['pubid']}", source="pubmedqa", question=r["question"],
              gold_pmids=[str(r["pubid"])], label=r["final_decision"])
         for r in rows
     ]
-    return _subsample(items, limit, seed)
+
+
+def pubmedqa(limit: int | None = None, seed: int = 0) -> list[Item]:
+    return _subsample(_pubmedqa_all(), limit, seed)
+
+
+def pubmedqa_dev(limit: int = 100, seed: int = 1) -> list[Item]:
+    """Prompt-tuning split, disjoint from the 300-item test set, so tuning can't leak into results."""
+    items = _pubmedqa_all()
+    test = {it.id for it in _subsample(items, TEST_SIZE, 0)}
+    return _subsample([it for it in items if it.id not in test], limit, seed)
 
 
 def golden(path: Path = HERE / "golden.jsonl", limit: int | None = None) -> list[Item]:
@@ -68,6 +81,8 @@ def bioasq(path: Path, limit: int | None = None, seed: int = 0) -> list[Item]:
 def load(name: str, limit: int | None = None, path: Path | None = None) -> list[Item]:
     if name == "pubmedqa":
         return pubmedqa(limit)
+    if name == "pubmedqa-dev":
+        return pubmedqa_dev(limit or 100)
     if name == "golden":
         return golden(limit=limit)
     if name == "router":
