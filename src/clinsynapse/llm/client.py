@@ -40,6 +40,22 @@ def _strip_fences(raw: str) -> str:
     return raw[start : end + 1] if start != -1 and end > start else raw
 
 
+_SLOTS: dict[str, threading.BoundedSemaphore] = {}
+_SLOTS_LOCK = threading.Lock()
+
+
+def _model_slots(model: str, limit: int) -> threading.BoundedSemaphore:
+    """One concurrency cap per model for the whole process.
+
+    Providers limit concurrent requests per model (ARC: 10). Per-client caps let the agent and
+    the judge together exceed that when they use the same model, which turns into 429 backoff.
+    """
+    with _SLOTS_LOCK:
+        if model not in _SLOTS:
+            _SLOTS[model] = threading.BoundedSemaphore(limit)
+        return _SLOTS[model]
+
+
 class LLMError(RuntimeError):
     pass
 
@@ -80,7 +96,6 @@ class LLMClient:
         self.settings = settings or get_settings()
         self._client: OpenAI | None = None
         self.cache = ResponseCache(self.settings.cache_path) if self.settings.llm_cache else None
-        self._slots = threading.BoundedSemaphore(self.settings.max_concurrency)
         self._json_mode = self.settings.json_mode
 
     @property
@@ -185,7 +200,7 @@ class LLMClient:
         delay = 2.0
         for i in range(attempts):
             try:
-                with self._slots:
+                with _model_slots(params["model"], self.settings.max_concurrency):
                     return self.client.chat.completions.create(**params)
             except (AuthenticationError, PermissionDeniedError, NotFoundError) as exc:
                 raise LLMFatal(f"{type(exc).__name__}: {exc}") from exc
