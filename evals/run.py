@@ -225,13 +225,17 @@ def main() -> None:
     p.add_argument("--judge", default="llm-alt", choices=["nli", "llm-main", "llm-alt"],
                    help="faithfulness judge; llm-alt differs from the gpt-oss verifier by design")
     p.add_argument("--workers", type=int, default=4)
+    p.add_argument("--max-seconds", type=float, default=300.0,
+                   help="per-query wall-clock budget; looser than serving (90s) so provider queueing "
+                        "latency is not scored as answer quality. Latency is reported separately.")
     p.add_argument("--retrieval-only", action="store_true")
     p.add_argument("--cache", type=Path, help="override cache file (e.g. evals/smoke/cache.sqlite)")
     p.add_argument("--name", help="output run name")
     p.add_argument("--out", type=Path, default=Path("reports/runs"))
     args = p.parse_args()
 
-    base = get_settings().model_copy(update={"temperature": 0.0, "web_search": False})
+    base = get_settings().model_copy(
+        update={"temperature": 0.0, "web_search": False, "max_seconds": args.max_seconds})
     if args.cache:
         base = base.model_copy(update={"cache_file": args.cache})
     items = load(args.dataset, args.limit)
