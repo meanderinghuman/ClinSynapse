@@ -79,3 +79,27 @@ def test_permission_denied_is_fatal_not_retried(tmp_path):
     with pytest.raises(LLMFatal):
         client.chat([{"role": "user", "content": "hi"}])
     assert calls == [1]
+
+
+def test_persistent_connection_error_is_fatal(tmp_path, monkeypatch):
+    import httpx
+    import pytest
+    from openai import APIConnectionError
+
+    import clinsynapse.llm.client as mod
+    from clinsynapse.config import Settings
+    from clinsynapse.llm.client import LLMClient, LLMFatal
+
+    monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+    calls = []
+
+    class Down:
+        def create(self, **params):
+            calls.append(1)
+            raise APIConnectionError(request=httpx.Request("POST", "http://x"))
+
+    client = LLMClient(Settings(llm_api_key="k", cache_file=tmp_path / "c.sqlite"))
+    client._client = type("O", (), {"chat": type("Ch", (), {"completions": Down()})})
+    with pytest.raises(LLMFatal):
+        client.chat([{"role": "user", "content": "hi"}])
+    assert len(calls) == 6

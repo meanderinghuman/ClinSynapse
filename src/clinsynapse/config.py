@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     temperature: float = 0.0
     reasoning_effort: Literal["low", "medium", "high"] = "low"
     json_mode: bool = True  # response_format=json_object; auto-disabled if the endpoint rejects it
+    request_timeout: float = 120.0  # seconds per LLM request; hung connections fail fast
     max_concurrency: int = 8  # ARC: 10 concurrent per model, 20 in flight per user
     llm_cache: bool = True
 

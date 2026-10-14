@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import TypeVar
 
 from openai import (
+    APIConnectionError,
     AuthenticationError,
     BadRequestError,
     NotFoundError,
@@ -104,7 +105,10 @@ class LLMClient:
         if self._client is None:
             if not self.settings.llm_api_key:
                 raise LLMError("No API key set (OPEN_AI_API_KEY) and response not cached")
-            self._client = OpenAI(base_url=self.settings.llm_base_url, api_key=self.settings.llm_api_key)
+            self._client = OpenAI(
+                base_url=self.settings.llm_base_url, api_key=self.settings.llm_api_key,
+                timeout=self.settings.request_timeout, max_retries=0,  # retries are ours, below
+            )
         return self._client
 
     def chat(
@@ -213,6 +217,10 @@ class LLMClient:
                 raise LLMError(str(exc)) from exc
             except Exception as exc:
                 if i == attempts - 1:
+                    if isinstance(exc, APIConnectionError):  # includes timeouts
+                        # Unreachable for the whole backoff window (~1.5 min): the endpoint is
+                        # down (e.g. VPN dropped). Stop rather than silently skip work.
+                        raise LLMFatal(f"endpoint unreachable: {exc}") from exc
                     raise LLMError(str(exc)) from exc
                 time.sleep(delay)
                 delay = min(delay * 2, 30.0)
