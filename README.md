@@ -12,13 +12,67 @@
 
 ## Results
 
-> **Pending first full run.** Generate with `make reproduce` (or `make evals && make report`), then paste `reports/results.md` here. Every number is a mean with a bootstrap 95% CI. A/B claims come from `evals.compare` (paired permutation test).
+300 held-out PubMedQA questions, open retrieval over 273,518 abstracts (the gold abstract must be found, not given). Values are means with bootstrap 95% CIs; Δ values are paired permutation tests on the same questions.
 
-| Config | Accuracy | Macro-F1 | Citation validity | Faithfulness | Refusal acc. | $/1k q | p95 s |
-|---|---|---|---|---|---|---|---|
-| Full agent (gpt-oss-120b) | – | – | – | – | – | – | – |
-| Single-shot RAG | – | – | – | – | – | – | – |
-| Full agent (DeepSeek-V4.1-Flash) | – | – | – | – | – | – | – |
+| Config | Accuracy | Macro-F1 | Faithfulness | Citation validity | Citation recall | Tokens/query |
+|---|---|---|---|---|---|---|
+| **Full agent** (gpt-oss-120b) | 0.603 [0.55, 0.66] | 0.561 [0.50, 0.61] | **0.742** [0.70, 0.78] | 1.000 | 0.930 [0.90, 0.96] | 8.8k |
+| Single-shot RAG | 0.633 [0.58, 0.69] | 0.584 [0.52, 0.64] | 0.668 [0.62, 0.72] | 1.000 | 0.950 [0.93, 0.98] | 3.6k |
+| Always answer "yes" | 0.530 | 0.231 | – | – | – | 0 |
+
+- **The agent buys faithfulness, not accuracy.** Versus single-shot RAG it raises faithfulness by **+6.9 pts (p = 0.003)** at 2.4× the tokens. Yes/no accuracy does not change significantly (−3.0 pts, p = 0.19).
+- **Every cited PMID was actually retrieved** (citation validity 1.000 in every config), and 93% of gold abstracts are cited.
+- **It knows when not to answer:** 30/30 personal-advice and off-topic probes refused; with the gold abstract removed it abstains 9.5× more often instead of guessing (see Fault injection).
+- Full pipeline latency (uncached): p50 13.5 s, p95 39.4 s. Reference cost ≈ $2.07 per 1,000 queries at public gpt-oss-120b list prices (ARC itself is free for VT users).
+
+### Retrieval (all 1,000 PubMedQA questions)
+
+| Retriever | Recall@1 | Recall@8 | MRR | nDCG@10 | ms/query |
+|---|---|---|---|---|---|
+| BM25 | 0.712 [0.68, 0.74] | 0.884 | 0.778 | 0.805 | 3 |
+| Dense (MedCPT) | 0.670 [0.64, 0.70] | 0.908 | 0.760 | 0.798 | 66 |
+| Hybrid (RRF) | 0.756 [0.73, 0.78] | 0.938 | 0.828 | 0.856 | 52 |
+| BM25 + rerank | 0.831 [0.81, 0.85] | 0.951 | 0.879 | 0.897 | 373 |
+| Dense + rerank | 0.846 [0.82, 0.87] | 0.966 | 0.894 | 0.913 | 434 |
+| **Hybrid + rerank** | 0.844 [0.82, 0.87] | **0.972** | **0.895** | **0.915** | 712 |
+
+The cross-encoder reranker is the largest single gain (+9 to +18 pts Recall@1). Dense alone ranks worst at Recall@1 but finds more gold documents in the top 8 than BM25: it retrieves the right paper and ranks it lower.
+
+### Ablations (each component removed from the full agent)
+
+| Component | What it buys (paired Δ, full − ablated) | Cost |
+|---|---|---|
+| Verifier | faithfulness **+2.8 pts** (p = 0.0001) | +1.2k tokens/query |
+| Evidence grader (corrective retrieval) | faithfulness **+5.7 pts** (p = 0.017) | +3.6k tokens/query |
+| Cross-encoder reranker | Recall@8 **+3.3 pts** (p = 0.007), fewer abstentions (p = 0.03) | ~0.4 s/query |
+| Hybrid vs BM25-only | Recall@8 **+2.0 pts** (p = 0.03) | dense encoding |
+| Hybrid vs dense-only | Recall@8 +1.3 pts (n.s.) | – |
+
+No ablation changed accuracy significantly (all |Δ| ≤ 3 pts, p > 0.1). Accuracy appears bounded by the evidence itself: PubMedQA abstracts are indexed without their conclusions.
+
+### Fault injection: do the metrics catch deliberate breakage?
+
+| Fault | Metric that should react | Clean → faulted |
+|---|---|---|
+| Corrupt numbers in answers | Faithfulness | 0.742 → **0.333** (p = 0.0001) |
+| Swap citations to wrong PMIDs | Citation precision / validity | 0.744 → **0.000** / 1.000 → **0.000** |
+| Remove gold abstract from the index | Abstention (not hallucination) | 4.7% → **44.7%** abstained; faithfulness of what it still answers 0.76 → 0.63 |
+| Plant an instruction in a retrieved abstract | Attack success rate | **0 / 300** |
+
+### Model comparison: gpt-oss-120b vs DeepSeek-V4.1-Flash
+
+| | gpt-oss-120b | DeepSeek-V4.1-Flash |
+|---|---|---|
+| Accuracy | 0.603 | 0.613 (n.s.) |
+| Tokens/query | 8.8k | **25.1k (2.9×)** |
+| Tool errors (mostly invalid structured output) | 0% | 10.3% |
+| Faithfulness, judged by NLI (neutral to both) | 0.771 | **0.909** (p = 0.0001) |
+| Faithfulness, judged by gpt-oss-120b (self-favoring for gpt-oss) | 0.953 | **0.997** (p = 0.0001) |
+| Faithfulness, judged by DeepSeek-V4.1-Flash (self-favoring for DeepSeek) | 0.748 | 0.991 (p = 0.0001) |
+
+All three judges, including gpt-oss grading its own answers, rate DeepSeek's claims as more faithful. The trade-off: DeepSeek is more faithful at 2.9× the tokens and a 10% structured-output failure rate.
+
+Under the 40k token budget sized for gpt-oss, DeepSeek's reasoning exhausted the budget on 25% of queries (accuracy 0.550, 18% abstained). With a 120k budget it matches gpt-oss on accuracy: a reasoning model needs a budget sized for its reasoning.
 
 ## Architecture
 
@@ -53,11 +107,11 @@ graph TD
 
 | | |
 |---|---|
-| **Datasets** | PubMedQA labeled (1,000), BioASQ (bring your own JSON after free registration), hand-built golden set (`evals/datasets/golden.jsonl`), router probes (personal advice and off-topic) |
+| **Datasets** | PubMedQA labeled (1,000; 300-item test set, disjoint 100-item dev set for prompt tuning), BioASQ (bring your own JSON after free registration), hand-built golden set (`evals/datasets/golden.jsonl`), router probes (personal advice and off-topic) |
 | **Retrieval** | Recall@k, MRR, nDCG@10 |
 | **Answer** | Accuracy, macro-F1, key-fact recall |
 | **Citations** | Validity (cited ∈ retrieved), precision, recall vs gold PMIDs |
-| **Faithfulness** | Share of claims entailed by their cited abstracts, per claim, judged by DeepSeek-V4.1-Flash (a different model family from the gpt-oss verifier); NLI and gpt-oss judges are compared in calibration |
+| **Faithfulness** | Share of claims entailed by their cited abstracts, per claim, judged by DeepSeek-V4.1-Flash (a different model family from the gpt-oss verifier); NLI and gpt-oss judges are compared below |
 | **Behavior** | Refusal accuracy on unanswerable questions, false-refusal rate, router accuracy |
 | **Agent** | Steps, retry-loop rate, tool-error rate, budget-hit rate |
 | **Operations** | p50/p95 latency, tokens per query, $ per 1k queries |
@@ -79,19 +133,23 @@ graph TD
 
 ## Judge agreement
 
-> Pending the full run: `uv run python -m evals.judges.agreement reports/runs/pubmedqa-full-n300`.
+650 claims from the full-agent run, judged independently by three judges:
 
-| Judge pair | Agreement | κ |
+| Judge pair | Agreement | Cohen's κ |
 |---|---|---|
-| DeepSeek-V4.1-Flash vs gpt-oss-120b | – | – |
-| DeepSeek-V4.1-Flash vs NLI | – | – |
-| gpt-oss-120b vs NLI | – | – |
+| gpt-oss-120b vs DeepSeek-V4.1-Flash | 0.789 | 0.36 |
+| NLI (DeBERTa-v3) vs DeepSeek-V4.1-Flash | 0.695 | 0.21 |
+| NLI vs gpt-oss-120b | 0.762 | 0.10 |
 
-Tooling for calibrating judges against human labels is included (`ui/label.py`, `evals/judges/calibration.py`).
+Share of claims each judge calls supported: gpt-oss-120b 0.91, NLI 0.78, DeepSeek-V4.1-Flash 0.71. Absolute faithfulness depends heavily on the judge, so every comparison in this README uses the same judge on both sides (DeepSeek-V4.1-Flash by default, which differs from the gpt-oss verifier). Fault injection shows the default judge reacts strongly to corrupted numbers (0.74 → 0.33). Tooling for calibrating judges against human labels is included (`ui/label.py`, `evals/judges/calibration.py`).
 
 ## What I learned / what failed
 
-> Written from measured results after the first full run.
+- **A prompt fix that worked on 30 examples overshot on 300.** After the smoke run, I told the synthesizer to answer "maybe" rather than abstain on inconclusive evidence. On the 300-question test set, 69 definite answers became "maybe", mostly null results ("no significant difference") that should be "no", and accuracy sat at 0.55, near the always-yes floor. I re-tuned the verdict rules on a separate 100-question dev split (0.50 → 0.66, p = 0.0007) and only then reran the test set (0.55 → 0.60). The dev gain did not fully transfer, which is why tuning never touches the test set.
+- **The agent's value is faithfulness, not accuracy.** Every component (grader, verifier, reranker) measurably improves retrieval or claim support, and none moves yes/no accuracy. If only the verdict matters, single-shot RAG is as good at 40% of the tokens.
+- **Eval infrastructure failures look like model failures.** A dropped VPN turned an overnight run into 300 abstentions with zero tokens used; provider queueing (a 130 s router call) tripped the 90 s budget and was scored as wrong answers; a reasoning model hit a token budget sized for a non-reasoning one. Each is now guarded: fail-fast on auth or connectivity errors, a pre-flight call before every run, a 120 s request timeout, and per-run budget overrides.
+- **Judges disagree more than expected** (κ 0.10–0.36). The NLI judge rejected a near-verbatim claim ("boys in middle puberty had increased odds of alcohol use") at 0.04 until sentence-window scoring was added. Relative comparisons with a fixed judge are trustworthy; absolute faithfulness numbers are not portable across judges.
+- **A self-grading trap:** DeepSeek scored 0.99 faithfulness when judged by DeepSeek. Model head-to-heads are re-scored with every judge (`evals/judges/rescore.py`).
 
 ## Limitations
 
@@ -99,7 +157,8 @@ Tooling for calibrating judges against human labels is included (`ui/label.py`, 
 - Abstracts only: no full text, tables or figures.
 - PubMedQA questions are derived from article titles. Titles are excluded from the index, but retrieval on PubMedQA is still easier than open-world search.
 - Faithfulness is scored by an LLM judge from a different model family than the verifier. Cross-judge agreement is reported above.
-- The NLI judge sees at most 512 tokens of evidence per claim.
+- The NLI judge sees at most 512 tokens of evidence per window.
+- Results are on PubMedQA only; the golden set and BioASQ loaders are built but not yet run.
 - ARC is free for VT users, so `$/1k queries` is a reference cost at public list prices (`src/clinsynapse/llm/client.py`). Models without a listed price report $0.
 
 ## Reproduce
