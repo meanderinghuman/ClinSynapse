@@ -1,0 +1,170 @@
+{
+  "n": 300,
+  "metrics": {
+    "accuracy": {
+      "mean": 0.5133333333333333,
+      "lo": 0.45666666666666667,
+      "hi": 0.57,
+      "n": 300
+    },
+    "recall@8": {
+      "mean": 0.8966666666666666,
+      "lo": 0.8633333333333333,
+      "hi": 0.93,
+      "n": 300
+    },
+    "gold_in_context": {
+      "mean": 0.9233333333333333,
+      "lo": 0.8933333333333333,
+      "hi": 0.95,
+      "n": 300
+    },
+    "citation_validity": {
+      "mean": 1.0,
+      "lo": 1.0,
+      "hi": 1.0,
+      "n": 271
+    },
+    "citation_precision": {
+      "mean": 0.7484474109446977,
+      "lo": 0.7103156213284821,
+      "hi": 0.7870455629976467,
+      "n": 271
+    },
+    "citation_recall": {
+      "mean": 0.9119718309859155,
+      "lo": 0.8767605633802817,
+      "hi": 0.9436619718309859,
+      "n": 284
+    },
+    "faithfulness": {
+      "mean": 0.7034890283967774,
+      "lo": 0.6607524107708611,
+      "hi": 0.7491472646869326,
+      "n": 271
+    },
+    "faithfulness_draft": {
+      "mean": 0.6779231273776728,
+      "lo": 0.6322319887183523,
+      "hi": 0.7237651056014693,
+      "n": 275
+    },
+    "abstained": {
+      "mean": 0.05333333333333334,
+      "lo": 0.03,
+      "hi": 0.08,
+      "n": 300
+    },
+    "refusal_correct": {
+      "mean": 0.9033333333333333,
+      "lo": 0.8666666666666667,
+      "hi": 0.9366666666666666,
+      "n": 300
+    },
+    "false_refusal": {
+      "mean": 0.09666666666666666,
+      "lo": 0.06333333333333334,
+      "hi": 0.13333333333333333,
+      "n": 300
+    },
+    "steps": {
+      "mean": 8.28,
+      "lo": 8.01,
+      "hi": 8.553333333333333,
+      "n": 300
+    },
+    "retrieval_loops": {
+      "mean": 0.7733333333333333,
+      "lo": 0.67,
+      "hi": 0.88,
+      "n": 300
+    },
+    "retry_loop": {
+      "mean": 0.4266666666666667,
+      "lo": 0.37,
+      "hi": 0.48333333333333334,
+      "n": 300
+    },
+    "tool_error": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "n": 300
+    },
+    "budget_hit": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "n": 300
+    },
+    "latency_s": {
+      "mean": 15.310366666666665,
+      "lo": 14.1578095,
+      "hi": 16.53125525,
+      "n": 300
+    },
+    "tokens": {
+      "mean": 8457.473333333333,
+      "lo": 8012.735583333334,
+      "hi": 8922.744083333333,
+      "n": 300
+    },
+    "cost_usd": {
+      "mean": 0.001991543,
+      "lo": 0.0018885890125000001,
+      "hi": 0.0021010521624999995,
+      "n": 300
+    },
+    "macro_f1": {
+      "mean": 0.5052203257154858,
+      "lo": 0.44965798471356927,
+      "hi": 0.5600966713330451,
+      "n": 300
+    }
+  },
+  "baselines": {
+    "majority_label": "yes",
+    "majority_accuracy": 0.53,
+    "majority_macro_f1": 0.23093681917211328
+  },
+  "ops": {
+    "p50_latency_s": 14.901,
+    "p95_latency_s": 33.38635000000001,
+    "tokens_per_query": 8457.473333333333,
+    "usd_per_1k_queries": 1.991543,
+    "cache_hit_rate": 0.043333333333333335
+  },
+  "dataset": "pubmedqa",
+  "preset": "no_rerank",
+  "fault": "none",
+  "judge": "llm-alt",
+  "settings": {
+    "llm_base_url": "https://llm-api.arc.vt.edu/api/v1",
+    "main_model": "gpt-oss-120b",
+    "small_model": "gpt-oss-120b",
+    "alt_model": "DeepSeek-V4.1-Flash",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "json_mode": true,
+    "max_concurrency": 8,
+    "llm_cache": true,
+    "retrieval_mode": "hybrid",
+    "rerank": false,
+    "candidates_per_retriever": 50,
+    "top_k": 8,
+    "rrf_k": 60,
+    "device": "mps",
+    "qdrant_url": null,
+    "use_planner": true,
+    "use_grader": true,
+    "use_verifier": true,
+    "max_retrieval_loops": 2,
+    "min_relevant_passages": 1,
+    "max_unsupported_ratio": 0.5,
+    "max_steps": 20,
+    "max_tokens": 40000,
+    "max_seconds": 90.0,
+    "web_search": false,
+    "replay_only": false
+  }
+}

@@ -46,3 +46,15 @@ repomix-output.txt
 
 # LangGraph API
 .langgraph_api
+
+# ClinSynapse 2.0
+data/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+reports/ci/
+reports/runs/*/results.jsonl
+reports/report.html
+reports/dev/*/results.jsonl
+reports/v1-prompt/*/results.jsonl

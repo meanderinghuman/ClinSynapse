@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test-and-gate:
+    runs-on: ubuntu-latest
+    env:
+      CS_REPLAY_ONLY: "true"   # smoke eval replays the committed cache; no models, index, or keys
+      CS_DEVICE: cpu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check src evals tests
+      - run: uv run pytest -q
+
+      - name: Smoke eval (30 cached PubMedQA cases)
+        run: |
+          uv run python -m evals.run --dataset pubmedqa --limit 30 --workers 1 \
+            --cache evals/smoke/cache.sqlite --out reports/ci --name smoke
+
+      - name: Quality gate vs committed baseline
+        run: uv run python -m evals.gate reports/baseline/smoke reports/ci/smoke --summary-md "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-eval
+          path: reports/ci/smoke
