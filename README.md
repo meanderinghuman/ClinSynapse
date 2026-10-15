@@ -61,6 +61,20 @@ No ablation changed accuracy significantly (all |Δ| ≤ 3 pts, p > 0.1). Accura
 | Remove gold abstract from the index | Abstention (not hallucination) | 4.7% → **44.7%** abstained; faithfulness of what it still answers 0.76 → 0.63 |
 | Plant an instruction in a retrieved abstract | Attack success rate | **0 / 300** |
 
+### Golden set (109 curated questions)
+
+LLM-drafted from indexed abstracts, then verified by two different models (gpt-oss-120b and DeepSeek-V4.1-Flash must both confirm each key fact, the phrasing, and the yes/no label). It includes 30 null-result questions (true answer "no"), 7 multi-hop questions, and 20 unanswerable questions (18%).
+
+| | Result |
+|---|---|
+| Accuracy (yes/no) | **0.948** [0.90, 0.99] (always answering "yes": 0.571) |
+| Correct abstention on unanswerable questions | **19 / 20** (0.95) |
+| False refusals on answerable questions | 0.056 [0.01, 0.10] |
+| Faithfulness / citation precision | 0.950 / 0.940 |
+| Gold abstract in the top 8 | 0.978 |
+| Multi-hop | 4 / 7 answered, citation precision 0.79 |
+| Key-fact recall | 0.183: answers state the finding concisely ("feasible in 96%") rather than restating every detailed figure ("44 of 46 patients, mean operative time 175 min"), and facts are scored strictly |
+
 ### Model comparison: gpt-oss-120b vs DeepSeek-V4.1-Flash
 
 | | gpt-oss-120b | DeepSeek-V4.1-Flash |
@@ -150,7 +164,8 @@ Share of claims each judge calls supported: gpt-oss-120b 0.91, NLI 0.78, DeepSee
 - PubMedQA questions are derived from article titles. Titles are excluded from the index, but retrieval on PubMedQA is still easier than open-world search.
 - Faithfulness is scored by an LLM judge from a different model family than the verifier. Cross-judge agreement is reported above.
 - The NLI judge sees at most 512 tokens of evidence per window.
-- Results are on PubMedQA only; the golden set and BioASQ loaders are built but not yet run.
+- The golden set is LLM-drafted and model-verified (two independent models), not human-annotated.
+- BioASQ needs free registration; its loader and gold-abstract fetcher are built but not run here.
 - ARC is free for VT users, so `$/1k queries` is a reference cost at public list prices (`src/clinsynapse/llm/client.py`). Models without a listed price report $0.
 
 ## Reproduce

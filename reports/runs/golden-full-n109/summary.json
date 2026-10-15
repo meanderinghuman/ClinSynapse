@@ -1,0 +1,183 @@
+{
+  "n": 109,
+  "metrics": {
+    "accuracy": {
+      "mean": 0.948051948051948,
+      "lo": 0.8961038961038961,
+      "hi": 0.987012987012987,
+      "n": 77
+    },
+    "recall@8": {
+      "mean": 0.9775280898876404,
+      "lo": 0.9438202247191011,
+      "hi": 1.0,
+      "n": 89
+    },
+    "gold_in_context": {
+      "mean": 0.9887640449438202,
+      "lo": 0.9662921348314607,
+      "hi": 1.0,
+      "n": 89
+    },
+    "citation_validity": {
+      "mean": 1.0,
+      "lo": 1.0,
+      "hi": 1.0,
+      "n": 85
+    },
+    "citation_precision": {
+      "mean": 0.9401927437641723,
+      "lo": 0.8976473922902494,
+      "hi": 0.9798823696145125,
+      "n": 84
+    },
+    "citation_recall": {
+      "mean": 0.9761904761904762,
+      "lo": 0.9464285714285714,
+      "hi": 1.0,
+      "n": 84
+    },
+    "faithfulness": {
+      "mean": 0.9500840336134453,
+      "lo": 0.9025168067226892,
+      "hi": 0.9865546218487395,
+      "n": 85
+    },
+    "faithfulness_draft": {
+      "mean": 0.929775588396278,
+      "lo": 0.8795840175150521,
+      "hi": 0.9730706075533662,
+      "n": 87
+    },
+    "key_fact_recall": {
+      "mean": 0.18253968253968253,
+      "lo": 0.13492063492063494,
+      "hi": 0.2341269841269841,
+      "n": 84
+    },
+    "abstained": {
+      "mean": 0.22018348623853212,
+      "lo": 0.14678899082568808,
+      "hi": 0.30275229357798167,
+      "n": 109
+    },
+    "refusal_correct": {
+      "mean": 0.944954128440367,
+      "lo": 0.8990825688073395,
+      "hi": 0.981651376146789,
+      "n": 109
+    },
+    "false_refusal": {
+      "mean": 0.056179775280898875,
+      "lo": 0.011235955056179775,
+      "hi": 0.10112359550561797,
+      "n": 89
+    },
+    "correct_abstention": {
+      "mean": 0.95,
+      "lo": 0.85,
+      "hi": 1.0,
+      "n": 20
+    },
+    "steps": {
+      "mean": 8.34862385321101,
+      "lo": 8.045871559633028,
+      "hi": 8.660550458715596,
+      "n": 109
+    },
+    "retrieval_loops": {
+      "mean": 0.7522935779816514,
+      "lo": 0.5871559633027523,
+      "hi": 0.926605504587156,
+      "n": 109
+    },
+    "retry_loop": {
+      "mean": 0.4036697247706422,
+      "lo": 0.3119266055045872,
+      "hi": 0.4954128440366973,
+      "n": 109
+    },
+    "tool_error": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "n": 109
+    },
+    "budget_hit": {
+      "mean": 0.0,
+      "lo": 0.0,
+      "hi": 0.0,
+      "n": 109
+    },
+    "latency_s": {
+      "mean": 12.209623853211008,
+      "lo": 8.908106651376146,
+      "hi": 15.681160779816516,
+      "n": 109
+    },
+    "tokens": {
+      "mean": 8031.0091743119265,
+      "lo": 7367.126146788991,
+      "hi": 8850.519036697247,
+      "n": 109
+    },
+    "cost_usd": {
+      "mean": 0.0018122311926605504,
+      "lo": 0.0016542534633027521,
+      "hi": 0.002009412385321101,
+      "n": 109
+    },
+    "macro_f1": {
+      "mean": 0.6484980620155039,
+      "lo": 0.6275771313778804,
+      "hi": 0.6632996632996634,
+      "n": 77
+    }
+  },
+  "baselines": {
+    "majority_label": "yes",
+    "majority_accuracy": 0.5714285714285714,
+    "majority_macro_f1": 0.24242424242424243
+  },
+  "ops": {
+    "p50_latency_s": 0.016,
+    "p95_latency_s": 43.2506,
+    "tokens_per_query": 8031.0091743119265,
+    "usd_per_1k_queries": 1.8122311926605503,
+    "cache_hit_rate": 0.6422018348623854
+  },
+  "dataset": "golden",
+  "preset": "full",
+  "fault": "none",
+  "judge": "llm-alt",
+  "settings": {
+    "llm_base_url": "https://llm-api.arc.vt.edu/api/v1",
+    "main_model": "gpt-oss-120b",
+    "small_model": "gpt-oss-120b",
+    "alt_model": "DeepSeek-V4.1-Flash",
+    "temperature": 0.0,
+    "reasoning_effort": "low",
+    "json_mode": true,
+    "request_timeout": 120.0,
+    "max_concurrency": 8,
+    "llm_cache": true,
+    "retrieval_mode": "hybrid",
+    "rerank": true,
+    "candidates_per_retriever": 50,
+    "top_k": 8,
+    "rrf_k": 60,
+    "device": "mps",
+    "qdrant_url": null,
+    "use_planner": true,
+    "use_grader": true,
+    "use_verifier": true,
+    "max_retrieval_loops": 2,
+    "min_relevant_passages": 1,
+    "max_unsupported_ratio": 0.5,
+    "max_steps": 20,
+    "max_tokens": 40000,
+    "max_seconds": 300.0,
+    "web_search": false,
+    "replay_only": false
+  }
+}
