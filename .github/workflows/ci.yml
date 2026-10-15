@@ -9,7 +9,6 @@ jobs:
   test-and-gate:
     runs-on: ubuntu-latest
     env:
-      CS_REPLAY_ONLY: "true"   # smoke eval replays the committed cache; no models, index, or keys
       CS_DEVICE: cpu
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +20,8 @@ jobs:
       - run: uv run pytest -q
 
       - name: Smoke eval (30 cached PubMedQA cases)
+        env:
+          CS_REPLAY_ONLY: "true"   # replay the committed cache; no models, index, or keys
         run: |
           uv run python -m evals.run --dataset pubmedqa --limit 30 --workers 1 \
             --cache evals/smoke/cache.sqlite --out reports/ci --name smoke
